@@ -111,4 +111,10 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
   },
+  "github.copilot.advanced": {
+    
+
+  },
+  "codeQL.variantAnalysis.enableGhecDr": true,
+  "github-enterprise.uri": "http://localhost:8080/"
 }

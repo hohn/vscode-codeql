@@ -339,13 +339,6 @@
         "title": "Variant analysis",
         "order": 5,
         "properties": {
-          "codeQL.variantAnalysis.controllerRepo": {
-            "type": "string",
-            "default": "",
-            "pattern": "^$|^(?:[a-zA-Z0-9]+-)*[a-zA-Z0-9]+/[a-zA-Z0-9-_]+$",
-            "patternErrorMessage": "Please enter a valid GitHub repository",
-            "markdownDescription": "[For internal use only] The name of the GitHub repository in which the GitHub Actions workflow is run when using the \"Run Variant Analysis\" command. The repository should be of the form `<owner>/<repo>`)."
-          },
           "codeQL.variantAnalysis.defaultResultsFilter": {
             "type": "string",
             "default": "all",
@@ -1931,11 +1924,6 @@
       {
         "view": "codeQLEvalLogViewer",
         "contents": "Run the 'Show Evaluator Log (UI)' command on a CodeQL query run in the Query History view."
-      },
-      {
-        "view": "codeQLVariantAnalysisRepositories",
-        "contents": "Set up a controller repository to start using variant analysis. [Learn more](https://codeql.github.com/docs/codeql-for-visual-studio-code/running-codeql-queries-at-scale-with-mrva#controller-repository) about controller repositories. \n[Set up controller repository](command:codeQLVariantAnalysisRepositories.setupControllerRepository)",
-        "when": "!config.codeQL.variantAnalysis.controllerRepo"
       }
     ]
   },

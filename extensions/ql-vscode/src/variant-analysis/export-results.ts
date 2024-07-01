@@ -160,7 +160,7 @@ async function exportVariantAnalysisAnalysisResults(
   expectedAnalysesResultsCount: number,
   exportFormat: "gist" | "local",
   commandManager: AppCommandManager,
-  credentials: Credentials,
+  _credentials: Credentials,
   progress: ProgressCallback,
   token: CancellationToken,
 ) {
@@ -191,7 +191,6 @@ async function exportVariantAnalysisAnalysisResults(
     markdownFiles,
     exportFormat,
     commandManager,
-    credentials,
     progress,
     token,
   );
@@ -236,7 +235,6 @@ async function exportResults(
   markdownFiles: MarkdownFile[],
   exportFormat: "gist" | "local",
   commandManager: AppCommandManager,
-  credentials: Credentials,
   progress?: ProgressCallback,
   token?: CancellationToken,
 ) {
@@ -249,7 +247,6 @@ async function exportResults(
       description,
       markdownFiles,
       commandManager,
-      credentials,
       progress,
       token,
     );
@@ -268,7 +265,6 @@ async function exportToGist(
   description: string,
   markdownFiles: MarkdownFile[],
   commandManager: AppCommandManager,
-  credentials: Credentials,
   progress?: ProgressCallback,
   token?: CancellationToken,
 ) {
@@ -291,7 +287,7 @@ async function exportToGist(
     {} as { [key: string]: { content: string } },
   );
 
-  const gistUrl = await createGist(credentials, description, gistFiles);
+  const gistUrl = await createGist(description, gistFiles);
   if (gistUrl) {
     // This needs to use .then to ensure we aren't keeping the progress notification open. We shouldn't await the
     // "Open gist" button click.

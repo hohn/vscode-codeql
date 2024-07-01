@@ -112,7 +112,9 @@ export function hasEnterpriseUri(): boolean {
  * Does the uri look like GHEC-DR?
  */
 function isGhecDrUri(uri: Uri | undefined): boolean {
-  return uri !== undefined && uri.authority.toLowerCase().endsWith(".ghe.com");
+  return (
+    uri !== undefined && !uri.authority.toLowerCase().endsWith("github.com")
+  );
 }
 
 /**
@@ -591,27 +593,7 @@ export const NO_CACHE_CONTEXTUAL_QUERIES = new Setting(
 // Settings for variant analysis
 const VARIANT_ANALYSIS_SETTING = new Setting("variantAnalysis", ROOT_SETTING);
 
-/**
- * The name of the "controller" repository that you want to use with the "Run Variant Analysis" command.
- * Note: This command is only available for internal users.
- *
- * This setting should be a GitHub repository of the form `<owner>/<repo>`.
- */
-const REMOTE_CONTROLLER_REPO = new Setting(
-  "controllerRepo",
-  VARIANT_ANALYSIS_SETTING,
-);
-
-export function getRemoteControllerRepo(): string | undefined {
-  return REMOTE_CONTROLLER_REPO.getValue<string>() || undefined;
-}
-
-export async function setRemoteControllerRepo(repo: string | undefined) {
-  await REMOTE_CONTROLLER_REPO.updateValue(repo, ConfigurationTarget.Global);
-}
-
 export interface VariantAnalysisConfig {
-  controllerRepo: string | undefined;
   showSystemDefinedRepositoryLists: boolean;
   /**
    * This uses a URL instead of a URI because the URL class is available in
@@ -630,10 +612,6 @@ export class VariantAnalysisConfigListener
       [VARIANT_ANALYSIS_SETTING, VSCODE_GITHUB_ENTERPRISE_URI_SETTING],
       e,
     );
-  }
-
-  public get controllerRepo(): string | undefined {
-    return getRemoteControllerRepo();
   }
 
   public get showSystemDefinedRepositoryLists(): boolean {

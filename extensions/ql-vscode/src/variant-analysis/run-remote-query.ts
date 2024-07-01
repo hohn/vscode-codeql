@@ -1,5 +1,5 @@
 import type { CancellationToken } from "vscode";
-import { Uri, window } from "vscode";
+import { Uri } from "vscode";
 import { join, sep, basename, relative } from "path";
 import { dump, load } from "js-yaml";
 import { copy, writeFile, readFile, mkdirp } from "fs-extra";
@@ -7,26 +7,17 @@ import type { DirectoryResult } from "tmp-promise";
 import { dir, tmpName } from "tmp-promise";
 import { tmpDir } from "../tmp-dir";
 import { getOnDiskWorkspaceFolders } from "../common/vscode/workspace-folders";
-import type { Credentials } from "../common/authentication";
 import type { CodeQLCliServer } from "../codeql-cli/cli";
 import { extLogger } from "../common/logging/vscode";
-import {
-  getActionBranch,
-  getRemoteControllerRepo,
-  setRemoteControllerRepo,
-} from "../config";
+import { getActionBranch } from "../config";
 import type { ProgressCallback } from "../common/vscode/progress";
 import { UserCancellationException } from "../common/vscode/progress";
-import type { RequestError } from "@octokit/types/dist-types";
 import type { QueryMetadata } from "../common/interface-types";
-import { getErrorMessage, REPO_REGEX } from "../common/helpers-pure";
-import { getRepositoryFromNwo } from "./gh-api/gh-api-client";
 import type { RepositorySelection } from "./repository-selection";
 import {
   getRepositorySelection,
   isValidSelection,
 } from "./repository-selection";
-import type { Repository } from "./shared/repository";
 import type { DbManager } from "../databases/db-manager";
 import {
   getQlPackFilePath,
@@ -285,13 +276,11 @@ interface PreparedRemoteQuery {
   base64Pack: string;
   modelPacks: ModelPackDetails[];
   repoSelection: RepositorySelection;
-  controllerRepo: Repository;
   queryStartTime: number;
 }
 
 export async function prepareRemoteQueryRun(
   cliServer: CodeQLCliServer,
-  credentials: Credentials,
   qlPackDetails: QlPackDetails,
   progress: ProgressCallback,
   token: CancellationToken,
@@ -321,8 +310,6 @@ export async function prepareRemoteQueryRun(
     step: 2,
     message: "Determining controller repo",
   });
-
-  const controllerRepo = await getControllerRepo(credentials);
 
   progress({
     maxStep: 4,
@@ -367,7 +354,6 @@ export async function prepareRemoteQueryRun(
     base64Pack: generatedPack.base64Pack,
     modelPacks: generatedPack.modelPacks,
     repoSelection,
-    controllerRepo,
     queryStartTime,
   };
 }
@@ -492,84 +478,6 @@ export function getQueryName(
 ): string {
   // The query name is either the name as specified in the query metadata, or the file name.
   return queryMetadata?.name ?? basename(queryFilePath);
-}
-
-export async function getControllerRepo(
-  credentials: Credentials,
-): Promise<Repository> {
-  // Get the controller repo from the config, if it exists.
-  // If it doesn't exist, prompt the user to enter it, check
-  // whether the repo exists, and save the nwo to the config.
-
-  let shouldSetControllerRepo = false;
-  let controllerRepoNwo: string | undefined;
-  controllerRepoNwo = getRemoteControllerRepo();
-  if (!controllerRepoNwo || !REPO_REGEX.test(controllerRepoNwo)) {
-    void extLogger.log(
-      controllerRepoNwo
-        ? "Invalid controller repository name."
-        : "No controller repository defined.",
-    );
-    controllerRepoNwo = await window.showInputBox({
-      title:
-        "Controller repository in which to run GitHub Actions workflows for variant analyses",
-      placeHolder: "<owner>/<repo>",
-      prompt:
-        "Enter the name of a GitHub repository in the format <owner>/<repo>. You can change this in the extension settings.",
-      ignoreFocusOut: true,
-    });
-    if (!controllerRepoNwo) {
-      throw new UserCancellationException("No controller repository entered.");
-    } else if (!REPO_REGEX.test(controllerRepoNwo)) {
-      // Check if user entered invalid input
-      throw new UserCancellationException(
-        "Invalid repository format. Must be a valid GitHub repository in the format <owner>/<repo>.",
-      );
-    }
-
-    shouldSetControllerRepo = true;
-  }
-
-  void extLogger.log(`Using controller repository: ${controllerRepoNwo}`);
-  const controllerRepo = await getControllerRepoFromApi(
-    credentials,
-    controllerRepoNwo,
-  );
-
-  if (shouldSetControllerRepo) {
-    void extLogger.log(
-      `Setting the controller repository as: ${controllerRepoNwo}`,
-    );
-    await setRemoteControllerRepo(controllerRepoNwo);
-  }
-
-  return controllerRepo;
-}
-
-async function getControllerRepoFromApi(
-  credentials: Credentials,
-  nwo: string,
-): Promise<Repository> {
-  const [owner, repo] = nwo.split("/");
-  try {
-    const controllerRepo = await getRepositoryFromNwo(credentials, owner, repo);
-    void extLogger.log(`Controller repository ID: ${controllerRepo.id}`);
-    return {
-      id: controllerRepo.id,
-      fullName: controllerRepo.full_name,
-      private: controllerRepo.private,
-    };
-  } catch (e) {
-    if ((e as RequestError).status === 404) {
-      throw new Error(`Controller repository "${owner}/${repo}" not found`);
-    } else {
-      throw new Error(
-        `Error getting controller repository "${owner}/${repo}": ${getErrorMessage(
-          e,
-        )}`,
-      );
-    }
-  }
 }
 
 function removeWorkspaceRefs(qlpack: QlPackFile) {

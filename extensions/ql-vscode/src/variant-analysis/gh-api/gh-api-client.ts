@@ -1,5 +1,4 @@
-import type { OctokitResponse } from "@octokit/types/dist-types";
-import type { Credentials } from "../../common/authentication";
+import { getGitHubInstanceUrl } from "../../config";
 import type { VariantAnalysisSubmission } from "../shared/variant-analysis";
 import type {
   VariantAnalysis,
@@ -7,84 +6,142 @@ import type {
   VariantAnalysisSubmissionRequest,
 } from "./variant-analysis";
 import type { Repository } from "./repository";
+import { extLogger } from "../../common/logging/vscode";
 
-export async function submitVariantAnalysis(
-  credentials: Credentials,
-  submissionDetails: VariantAnalysisSubmission,
-): Promise<VariantAnalysis> {
-  const octokit = await credentials.getOctokit();
-
-  const { actionRepoRef, language, pack, databases, controllerRepoId } =
-    submissionDetails;
-
-  const data: VariantAnalysisSubmissionRequest = {
-    action_repo_ref: actionRepoRef,
-    language,
-    query_pack: pack,
-    repositories: databases.repositories,
-    repository_lists: databases.repositoryLists,
-    repository_owners: databases.repositoryOwners,
-  };
-
-  const response: OctokitResponse<VariantAnalysis> = await octokit.request(
-    "POST /repositories/:controllerRepoId/code-scanning/codeql/variant-analyses",
-    {
-      controllerRepoId,
-      data,
-    },
-  );
-
-  return response.data;
+function getOctokitBaseUrl(): string {
+  let apiUrl = getGitHubInstanceUrl().toString();
+  if (apiUrl.endsWith("/")) {
+    apiUrl = apiUrl.slice(0, -1);
+  }
+  if (apiUrl.startsWith("https://")) {
+    apiUrl = apiUrl.replace("https://", "http://");
+  }
+  return apiUrl;
 }
 
+export async function submitVariantAnalysis(
+  submissionDetails: VariantAnalysisSubmission,
+): Promise<VariantAnalysis> {
+  try {
+    console.log("Getting base URL...");
+    const baseUrl = getOctokitBaseUrl();
+    void extLogger.log(`Base URL: ${baseUrl}`);
+
+    const { actionRepoRef, language, pack, databases, controllerRepoId } =
+      submissionDetails;
+
+    const data: VariantAnalysisSubmissionRequest = {
+      action_repo_ref: actionRepoRef,
+      language,
+      query_pack: pack,
+      repositories: databases.repositories,
+      repository_lists: databases.repositoryLists,
+      repository_owners: databases.repositoryOwners,
+    };
+
+    void extLogger.log(
+      `Sending fetch request with data: ${JSON.stringify(data)}`,
+    );
+
+    void extLogger.log(
+      `Fetch request URL: ${baseUrl}/repositories/${controllerRepoId}/code-scanning/codeql/variant-analyses`,
+    );
+
+    const response = await fetch(
+      `${baseUrl}/repositories/${controllerRepoId}/code-scanning/codeql/variant-analyses`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      },
+    );
+
+    void extLogger.log(`Response status: ${response.status}`);
+
+    if (!response.ok) {
+      throw new Error(
+        `Error submitting variant analysis: ${response.statusText}`,
+      );
+    }
+
+    const responseData = await response.json();
+    void extLogger.log(`Response data: ${responseData}`);
+
+    return responseData;
+  } catch (error) {
+    void extLogger.log(`Error: ${error}`);
+    throw error;
+  }
+}
 export async function getVariantAnalysis(
-  credentials: Credentials,
   controllerRepoId: number,
   variantAnalysisId: number,
 ): Promise<VariantAnalysis> {
-  const octokit = await credentials.getOctokit();
+  const baseUrl = getOctokitBaseUrl();
 
-  const response: OctokitResponse<VariantAnalysis> = await octokit.request(
-    "GET /repositories/:controllerRepoId/code-scanning/codeql/variant-analyses/:variantAnalysisId",
+  const response = await fetch(
+    `${baseUrl}/repositories/${controllerRepoId}/code-scanning/codeql/variant-analyses/${variantAnalysisId}`,
     {
-      controllerRepoId,
-      variantAnalysisId,
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     },
   );
 
-  return response.data;
+  if (!response.ok) {
+    throw new Error(`Error getting variant analysis: ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 export async function getVariantAnalysisRepo(
-  credentials: Credentials,
   controllerRepoId: number,
   variantAnalysisId: number,
   repoId: number,
 ): Promise<VariantAnalysisRepoTask> {
-  const octokit = await credentials.getOctokit();
+  const baseUrl = getOctokitBaseUrl();
 
-  const response: OctokitResponse<VariantAnalysisRepoTask> =
-    await octokit.request(
-      "GET /repositories/:controllerRepoId/code-scanning/codeql/variant-analyses/:variantAnalysisId/repositories/:repoId",
-      {
-        controllerRepoId,
-        variantAnalysisId,
-        repoId,
+  const response = await fetch(
+    `${baseUrl}/repositories/${controllerRepoId}/code-scanning/codeql/variant-analyses/${variantAnalysisId}/repositories/${repoId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+    },
+  );
 
-  return response.data;
+  if (!response.ok) {
+    throw new Error(
+      `Error getting variant analysis repo: ${response.statusText}`,
+    );
+  }
+
+  return response.json();
 }
 
 export async function getRepositoryFromNwo(
-  credentials: Credentials,
   owner: string,
   repo: string,
 ): Promise<Repository> {
-  const octokit = await credentials.getOctokit();
+  const baseUrl = getOctokitBaseUrl();
 
-  const response = await octokit.rest.repos.get({ owner, repo });
-  return response.data as Repository;
+  const response = await fetch(`${baseUrl}/repos/${owner}/${repo}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error getting repository: ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 /**
@@ -92,22 +149,29 @@ export async function getRepositoryFromNwo(
  * Returns the URL of the created gist.
  */
 export async function createGist(
-  credentials: Credentials,
   description: string,
   files: { [key: string]: { content: string } },
 ): Promise<string | undefined> {
-  const octokit = await credentials.getOctokit();
-  const response = await octokit.request("POST /gists", {
-    description,
-    files,
-    public: false,
+  const baseUrl = getOctokitBaseUrl();
+
+  const response = await fetch(`${baseUrl}/gists`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      description,
+      files,
+      public: false,
+    }),
   });
-  if (response.status >= 300) {
+
+  if (!response.ok) {
     throw new Error(
-      `Error exporting variant analysis results: ${response.status} ${
-        response?.data || ""
-      }`,
+      `Error creating gist: ${response.status} ${response.statusText}`,
     );
   }
-  return response.data.html_url;
+
+  const data = await response.json();
+  return data.html_url;
 }

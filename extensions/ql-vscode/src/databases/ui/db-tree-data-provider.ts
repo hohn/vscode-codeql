@@ -83,11 +83,6 @@ export class DbTreeDataProvider
   }
 
   private createTree(): DbTreeViewItem[] {
-    // Returning an empty tree here will show the welcome view
-    if (!this.variantAnalysisConfig.controllerRepo) {
-      return [];
-    }
-
     const dbItemsResult = this.dbManager.getDbItems();
 
     if (dbItemsResult.isFailure) {

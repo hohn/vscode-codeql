@@ -373,16 +373,19 @@ export class VariantAnalysisManager
       );
     }
 
+    // log to extLogger
+    void this.app.logger.log(
+      `Running variant analysis with query: ${queryName}, language: ${variantAnalysisLanguage}`,
+    );
+
     const {
       actionBranch,
       base64Pack,
       modelPacks,
       repoSelection,
-      controllerRepo,
       queryStartTime,
     } = await prepareRemoteQueryRun(
       this.cliServer,
-      this.app.credentials,
       qlPackDetails,
       progress,
       token,
@@ -399,12 +402,15 @@ export class VariantAnalysisManager
             count: qlPackDetails.queryFiles.length,
           };
 
+    // log that submitting
+    void this.app.logger.log("Submitting variant analysis");
+
     const variantAnalysisSubmission: VariantAnalysisSubmission = {
       startTime: queryStartTime,
       actionRepoRef: actionBranch,
-      controllerRepoId: controllerRepo.id,
       language: variantAnalysisLanguage,
       pack: base64Pack,
+      controllerRepoId: 0,
       query: {
         name: queryName,
         filePath: firstQueryFile,
@@ -422,7 +428,6 @@ export class VariantAnalysisManager
     let variantAnalysisResponse: ApiVariantAnalysis;
     try {
       variantAnalysisResponse = await submitVariantAnalysis(
-        this.app.credentials,
         variantAnalysisSubmission,
       );
     } catch (e: unknown) {
@@ -431,9 +436,17 @@ export class VariantAnalysisManager
         e instanceof RequestError &&
         handleRequestError(e, this.config.githubUrl, this.app.logger)
       ) {
+        // log
+        void this.app.logger.log(
+          `Error submitting variant analysis: ${getErrorMessage(e)}`,
+        );
         return undefined;
       }
 
+      // throwing
+      void this.app.logger.log(
+        `Error submitting variant analysis: ${getErrorMessage(e)}`,
+      );
       throw e;
     }
 
@@ -806,8 +819,7 @@ export class VariantAnalysisManager
     let repoTask: VariantAnalysisRepositoryTask;
     try {
       const repoTaskResponse = await getVariantAnalysisRepo(
-        this.app.credentials,
-        variantAnalysis.controllerRepo.id,
+        0,
         variantAnalysis.id,
         scannedRepo.repository.id,
       );

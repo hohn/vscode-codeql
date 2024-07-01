@@ -48,12 +48,12 @@ function mapVariantAnalysisToDomainModel(
 ): VariantAnalysis {
   return {
     id: variantAnalysis.id,
-    controllerRepo: {
-      id: variantAnalysis.controllerRepo.id,
-      fullName: variantAnalysis.controllerRepo.fullName,
-      private: variantAnalysis.controllerRepo.private,
-    },
     language: mapQueryLanguageToDomainModel(variantAnalysis.query.language),
+    controllerRepo: {
+      id: 0,
+      fullName: "",
+      private: false,
+    },
     query: {
       name: variantAnalysis.query.name,
       filePath: variantAnalysis.query.filePath,

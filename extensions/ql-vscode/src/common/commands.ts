@@ -290,7 +290,6 @@ export type DatabasePanelCommands = {
   "codeQLVariantAnalysisRepositories.openConfigFile": () => Promise<void>;
   "codeQLVariantAnalysisRepositories.addNewDatabase": () => Promise<void>;
   "codeQLVariantAnalysisRepositories.addNewList": () => Promise<void>;
-  "codeQLVariantAnalysisRepositories.setupControllerRepository": () => Promise<void>;
 
   "codeQLVariantAnalysisRepositories.setSelectedItem": TreeViewContextSingleSelectionCommandFunction<DbTreeViewItem>;
   "codeQLVariantAnalysisRepositories.setSelectedItemContextMenu": TreeViewContextSingleSelectionCommandFunction<DbTreeViewItem>;

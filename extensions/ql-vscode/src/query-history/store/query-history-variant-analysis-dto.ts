@@ -15,11 +15,6 @@ export interface QueryHistoryVariantAnalysisDto {
 
 export interface VariantAnalysisDto {
   id: number;
-  controllerRepo: {
-    id: number;
-    fullName: string;
-    private: boolean;
-  };
   query: {
     name: string;
     filePath: string;

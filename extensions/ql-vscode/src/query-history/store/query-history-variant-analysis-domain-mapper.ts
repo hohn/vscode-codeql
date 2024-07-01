@@ -48,11 +48,6 @@ function mapVariantAnalysisDtoToDto(
 ): VariantAnalysisDto {
   return {
     id: variantAnalysis.id,
-    controllerRepo: {
-      id: variantAnalysis.controllerRepo.id,
-      fullName: variantAnalysis.controllerRepo.fullName,
-      private: variantAnalysis.controllerRepo.private,
-    },
     query: {
       name: variantAnalysis.query.name,
       filePath: variantAnalysis.query.filePath,

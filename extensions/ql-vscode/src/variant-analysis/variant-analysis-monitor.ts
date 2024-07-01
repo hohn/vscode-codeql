@@ -62,7 +62,6 @@ export class VariantAnalysisMonitor extends DisposableObject {
     try {
       await this._monitorVariantAnalysis(
         variantAnalysis.id,
-        variantAnalysis.controllerRepo.id,
         variantAnalysis.executionStartTime,
         variantAnalysis.query.name,
         variantAnalysis.language,
@@ -74,7 +73,6 @@ export class VariantAnalysisMonitor extends DisposableObject {
 
   private async _monitorVariantAnalysis(
     variantAnalysisId: number,
-    controllerRepoId: number,
     executionStartTime: number,
     queryName: string,
     language: QueryLanguage,
@@ -97,11 +95,7 @@ export class VariantAnalysisMonitor extends DisposableObject {
 
       let variantAnalysisSummary: ApiVariantAnalysis;
       try {
-        variantAnalysisSummary = await getVariantAnalysis(
-          this.app.credentials,
-          controllerRepoId,
-          variantAnalysisId,
-        );
+        variantAnalysisSummary = await getVariantAnalysis(0, variantAnalysisId);
       } catch (e) {
         const errorMessage = getErrorMessage(e);
 

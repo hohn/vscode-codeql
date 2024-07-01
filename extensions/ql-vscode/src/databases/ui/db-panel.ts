@@ -18,8 +18,6 @@ import type { DbManager } from "../db-manager";
 import { DbTreeDataProvider } from "./db-tree-data-provider";
 import type { DbTreeViewItem } from "./db-tree-view-item";
 import { getGitHubUrl } from "./db-tree-view-item-action";
-import { getControllerRepo } from "../../variant-analysis/run-remote-query";
-import { getErrorMessage } from "../../common/helpers-pure";
 import type { DatabasePanelCommands } from "../../common/commands";
 import type { App } from "../../common/app";
 import { QueryLanguage } from "../../common/query-language";
@@ -74,9 +72,6 @@ export class DbPanel extends DisposableObject {
         this.addNewRemoteDatabase.bind(this),
       "codeQLVariantAnalysisRepositories.addNewList":
         this.addNewList.bind(this),
-      "codeQLVariantAnalysisRepositories.setupControllerRepository":
-        this.setupControllerRepository.bind(this),
-
       "codeQLVariantAnalysisRepositories.setSelectedItem":
         this.setSelectedItem.bind(this),
       "codeQLVariantAnalysisRepositories.setSelectedItemContextMenu":
@@ -426,23 +421,5 @@ export class DbPanel extends DisposableObject {
     }
 
     await this.app.commands.execute("vscode.open", Uri.parse(githubUrl));
-  }
-
-  private async setupControllerRepository(): Promise<void> {
-    try {
-      // This will also validate that the controller repository is valid
-      await getControllerRepo(this.app.credentials);
-    } catch (e: unknown) {
-      if (e instanceof UserCancellationException) {
-        return;
-      }
-
-      void showAndLogErrorMessage(
-        this.app.logger,
-        `An error occurred while setting up the controller repository: ${getErrorMessage(
-          e,
-        )}`,
-      );
-    }
   }
 }
