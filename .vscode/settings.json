@@ -116,5 +116,5 @@
 
   },
   "codeQL.variantAnalysis.enableGhecDr": true,
-  "github-enterprise.uri": "http://localhost:8080/"
+  "github-enterprise.uri": "http://server:8080/"
 }

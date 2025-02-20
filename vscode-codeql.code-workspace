@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "./extensions/ql-vscode/node_modules/typescript/lib",
+		"typescript.enablePromptUseWorkspaceTsdk": true,
+		"terminal.integrated.env.linux": {
+			"LANG": "en-US",
+			"TZ": "UTC"
+		},
+		"terminal.integrated.env.osx": {
+			"LANG": "en-US",
+			"TZ": "UTC"
+		},
+		"terminal.integrated.env.windows": {
+			"LANG": "en-US",
+			"TZ": "UTC"
+		},
+		"github.copilot.advanced": {},
+		"github-enterprise.uri": "http://server:8080"
+
+    }
+}
