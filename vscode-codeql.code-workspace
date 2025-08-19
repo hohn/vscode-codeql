@@ -20,7 +20,8 @@
 			"TZ": "UTC"
 		},
 		"github.copilot.advanced": {},
-		"github-enterprise.uri": "http://server:8080"
+        "github-enterprise.uri": "http://server:8080",
+        "sarif-viewer.connectToGithubCodeScanning": "off"
 
     }
 }
